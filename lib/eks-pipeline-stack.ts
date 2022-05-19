@@ -1,94 +1,45 @@
-import * as cdk from "@aws-cdk/core";
-import eks = require("@aws-cdk/aws-eks");
-import * as ssm from "@aws-cdk/aws-ssm";
+import * as cdk from "aws-cdk-lib";
+import eks = require("aws-cdk-lib/aws-eks");
 import {
   CodePipeline,
   CodePipelineSource,
   ShellStep,
   ManualApprovalStep,
-} from "@aws-cdk/pipelines";
+} from "aws-cdk-lib/pipelines";
 import { EksClusterStage } from "./eks-cluster-stage";
-import { AppDnsStage } from "./app-dns-stage";
+import { Repository } from 'aws-cdk-lib/aws-codecommit';
+import { Construct } from 'constructs'
+import { CodeCommitTrigger } from "aws-cdk-lib/aws-codepipeline-actions";
 
 export class EksPipelineStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const repository = Repository.fromRepositoryName(this, 'ops-code-repository', 'kxt29-ops')
     const pipeline = new CodePipeline(this, "Pipeline", {
+      selfMutation: false,
+      crossAccountKeys: true,
       synth: new ShellStep("Synth", {
-        input: CodePipelineSource.gitHub(
-          "aws-samples/aws-cdk-pipelines-eks-cluster",
-          "main",
-          {
-            authentication:
-              cdk.SecretValue.secretsManager("github-oauth-token"),
-          }
-        ),
+        input: CodePipelineSource.codeCommit(repository, 'MED-85',{
+          trigger: CodeCommitTrigger.POLL
+        }),
         commands: ["npm ci", "npm run build", "npx cdk synth"],
       }),
-      pipelineName: "EKSClusterBlueGreen",
+      pipelineName: "kxt29-eks-pipeline",
     });
 
-    const clusterANameSuffix = "blue";
-    const clusterBNameSuffix = "green";
 
-    const eksClusterStageA = new EksClusterStage(this, "EKSClusterA", {
+    const eksClusterStageA = new EksClusterStage(this, "eks-cluster", {
       clusterVersion: eks.KubernetesVersion.V1_20,
-      nameSuffix: clusterANameSuffix,
+      nameSuffix: 'medchem',
       env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
+        account: '784302963922',
+        region: 'us-east-2'
       },
     });
 
-    const eksClusterStageB = new EksClusterStage(this, "EKSClusterB", {
-      clusterVersion: eks.KubernetesVersion.V1_21,
-      nameSuffix: clusterBNameSuffix,
-      env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
-      },
-    });
+    pipeline.addStage(eksClusterStageA)
 
-    const eksClusterWave = pipeline.addWave("DeployEKSClusters");
 
-    const domainName = ssm.StringParameter.valueForStringParameter(
-      this,
-      "/eks-cdk-pipelines/zoneName"
-    );
-
-    eksClusterWave.addStage(eksClusterStageA, {
-      post: [
-        new ShellStep("Validate App", {
-          commands: [
-            `for i in {1..12}; do curl -Ssf http://echoserver.${clusterANameSuffix}.${domainName} && echo && break; echo -n "Try #$i. Waiting 10s...\n"; sleep 10; done`,
-          ],
-        }),
-      ],
-    });
-
-    eksClusterWave.addStage(eksClusterStageB, {
-      post: [
-        new ShellStep("Validate App", {
-          commands: [
-            `for i in {1..12}; do curl -Ssf http://echoserver.${clusterBNameSuffix}.${domainName} && echo && break; echo -n "Try #$i. Waiting 10s...\n"; sleep 10; done`,
-          ],
-        }),
-      ],
-    });
-
-    const prodEnv = clusterBNameSuffix;
-
-    const appDnsStage = new AppDnsStage(this, "UpdateDNS", {
-      envName: prodEnv,
-      env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
-      },
-    });
-
-    pipeline.addStage(appDnsStage, {
-      pre: [new ManualApprovalStep(`Promote-${prodEnv}-Environment`)],
-    });
   }
 }
