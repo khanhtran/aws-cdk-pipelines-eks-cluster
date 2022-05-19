@@ -29,7 +29,7 @@ export class EksPipelineStack extends cdk.Stack {
     });
 
 
-    const eksClusterStageA = new EksClusterStage(this, "eks-cluster", {
+    const eksClusterStageA = new EksClusterStage(this, "dev", {
       clusterVersion: eks.KubernetesVersion.V1_20,
       nameSuffix: 'medchem',
       env: {
