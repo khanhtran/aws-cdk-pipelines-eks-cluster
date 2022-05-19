@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import eks = require("aws-cdk-lib/aws-eks");
 import {
+  CodeBuildStep,
   CodePipeline,
   CodePipelineSource,
   ShellStep,
@@ -18,12 +19,12 @@ export class EksPipelineStack extends cdk.Stack {
     const repository = Repository.fromRepositoryName(this, 'ops-code-repository', 'ops-pipeline')
     const pipeline = new CodePipeline(this, "Pipeline", {
       selfMutation: false,
-      crossAccountKeys: true,
-      synth: new ShellStep("Synth", {
+      crossAccountKeys: false,
+      synth: new CodeBuildStep("Synth", {
         input: CodePipelineSource.codeCommit(repository, 'master',{
           trigger: CodeCommitTrigger.POLL
         }),
-        commands: ["npm install -g aws-cdk", "cdk --version", "npm ci", "npm run build", "npx cdk synth"],
+        commands: ["npm ci", "npm run build", "npx cdk synth"],
       }),
       pipelineName: "kxt29-eks-pipeline",
     });
