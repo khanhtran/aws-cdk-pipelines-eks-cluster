@@ -23,7 +23,7 @@ export class EksPipelineStack extends cdk.Stack {
         input: CodePipelineSource.codeCommit(repository, 'master',{
           trigger: CodeCommitTrigger.POLL
         }),
-        commands: ["cdk --version", "npm ci", "npm run build", "npx cdk synth"],
+        commands: ["npm install -g aws-cdk", "cdk --version", "npm ci", "npm run build", "npx cdk synth"],
       }),
       pipelineName: "kxt29-eks-pipeline",
     });
