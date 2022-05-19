@@ -15,12 +15,12 @@ export class EksPipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const repository = Repository.fromRepositoryName(this, 'ops-code-repository', 'kxt29-ops')
+    const repository = Repository.fromRepositoryName(this, 'ops-code-repository', 'ops-pipeline')
     const pipeline = new CodePipeline(this, "Pipeline", {
       selfMutation: false,
       crossAccountKeys: true,
       synth: new ShellStep("Synth", {
-        input: CodePipelineSource.codeCommit(repository, 'MED-85',{
+        input: CodePipelineSource.codeCommit(repository, 'master',{
           trigger: CodeCommitTrigger.POLL
         }),
         commands: ["cdk --version", "npm ci", "npm run build", "npx cdk synth"],
@@ -33,7 +33,7 @@ export class EksPipelineStack extends cdk.Stack {
       clusterVersion: eks.KubernetesVersion.V1_20,
       nameSuffix: 'medchem',
       env: {
-        account: '784302963922',
+        account: '657641750194',
         region: 'us-east-2'
       },
     });

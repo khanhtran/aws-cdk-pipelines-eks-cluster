@@ -19,7 +19,7 @@ export class EksManagedNodeGroup extends Construct {
 
     const lt = new ec2.CfnLaunchTemplate(this, "SSMLaunchTemplate", {
       launchTemplateData: {
-        instanceType: "t3a.medium",
+        instanceType: "t2.micro",
         tagSpecifications: [
           {
             resourceType: "instance",
