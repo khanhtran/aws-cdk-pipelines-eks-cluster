@@ -25,10 +25,10 @@ export class EksClusterStack extends cdk.Stack {
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE }],
     });
 
-    const eksMng = new EksManagedNodeGroup(this, "EksManagedNodeGroup", {
-      cluster: cluster,
-      nameSuffix: props.nameSuffix,
-    });
+    // const eksMng = new EksManagedNodeGroup(this, "EksManagedNodeGroup", {
+    //   cluster: cluster,
+    //   nameSuffix: props.nameSuffix,
+    // });
 
 
   }
