@@ -16,7 +16,7 @@ export class EksClusterStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: EksClusterStackProps) {
     super(scope, id, props);
 
-    const vpc = Vpc.fromVpcAttributes(scope, 'default-vpc',
+    const vpc = Vpc.fromVpcAttributes(this, 'default-vpc',
     {
       vpcId: '0d6840f719e623c0b',
       availabilityZones: ['us-east-2a', 'us-east-2b', 'us-east-2c'],
