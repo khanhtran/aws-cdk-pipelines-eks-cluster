@@ -18,7 +18,7 @@ export class EksClusterStack extends cdk.Stack {
 
     const vpc = Vpc.fromVpcAttributes(this, 'default-vpc',
     {
-      vpcId: '0d6840f719e623c0b',
+      vpcId: 'vpc-0d6840f719e623c0b',
       availabilityZones: ['us-east-2a', 'us-east-2b', 'us-east-2c'],
       privateSubnetIds: ["subnet-0ecdc7f883bd80731", "subnet-04426cd587ab2f852", "subnet-0e987c484ac30538d"],
     })
